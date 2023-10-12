@@ -13,7 +13,7 @@ env:
   QT_VERSION: 5.15.1
   CCACHE_VERSION: 3.7.7
   CACHE_PARTITION: dev
-  HOST_N_CORES: 2
+  HOST_N_CORES: 16
   NINJA_STATUS: "[%f/%t %o/sec] "
   CCACHE_COMPRESS: "true"
   CCACHE_COMPRESSLEVEL: "6"
@@ -40,12 +40,12 @@ jobs:
         #    os: macos-latest,
         #    build_type: Release,
         #  }
-        #- {
-        #    name: "Windows MSVC Conan Release", artifact: "Windows-MSVC",
-        #    os: windows-latest,
-        #    build_type: Release,
-        #    environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-        #  }
+        - {
+            name: "Windows MSVC Conan Release", artifact: "Windows-MSVC",
+            os: windows-latest,
+            build_type: Release,
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          }
 
     steps:
     - name: Sparse checkout
@@ -68,17 +68,24 @@ jobs:
         git -c protocol.version=2 fetch --no-tags --prune --progress --depth=10 origin +${GITHUB_SHA}:refs/remotes/origin/${BRANCH}
         git checkout --progress --force -B $BRANCH refs/remotes/origin/$BRANCH
 
+    # For Conan
+    - name: Python Setup
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+      if: runner.os == 'Windows'  || runner.os == 'macOS'
+
     - name: Download Qt Windows
       id: qt_win
       if: runner.os == 'Windows'
       env:
         TOOLCHAIN: "win64_msvc2019_64"
         DIR: "msvc2019_64"
-      shell: bash --noprofile --norc -eo pipefail -x {0} 
+      shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
-        py -m pip install -r Tools/qt/qt-downloader-requirements.txt
+        pip install -r Tools/qt/qt-downloader-requirements.txt
         QT_INSTALL_DIR="/c/Qt"
-        py Tools/qt/qt-downloader windows desktop ${QT_VERSION} ${TOOLCHAIN} --output=${QT_INSTALL_DIR} --qt_modules="${QT_MODULES}"
+        python Tools/qt/qt-downloader windows desktop ${QT_VERSION} ${TOOLCHAIN} --output=${QT_INSTALL_DIR} --qt_modules="${QT_MODULES}"
         export QTDIR="${QT_INSTALL_DIR}/${QT_VERSION}/${DIR}"
         ls $QTDIR
         Tools/qt/license_writer.sh
@@ -89,7 +96,7 @@ jobs:
       id: qt_mac
       if: runner.os == 'macOS'
       shell: bash --noprofile --norc -eo pipefail -x {0}
-      env: 
+      env:
         TOOLCHAIN: "clang_64"
       run: |
         pip3 install -r Tools/qt/qt-downloader-requirements.txt
@@ -122,17 +129,12 @@ jobs:
         key: ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
         restore-keys: |
           ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
-    # For Conan
-    - uses: actions/setup-python@v1
-      if: runner.os == 'Windows' || runner.os == 'macOS'
-      with:
-        python-version: '3.7'
 
     - name: Install dependencies (Conan)
       if: runner.os == 'Windows' || runner.os == 'macOS'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
-        pip3 install conan
+        pip3 install conan==1.60.1
 
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
