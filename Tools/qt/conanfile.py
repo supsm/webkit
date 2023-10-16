@@ -44,8 +44,7 @@ class QtWebKitConan(ConanFile):
     default_options = {
         "install_prefix": None,
 
-        "icu:shared": True,
-        "icu:data_packaging": "library",
+        "icu:shared": True
 
         "libxml2:shared": True,
         "libxml2:iconv": False,
