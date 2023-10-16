@@ -90,7 +90,7 @@ class QtWebKitConan(ConanFile):
     def requirements(self):
         # TODO: Handle case when custom ICU is needed (AppStore etc., MACOS_USE_SYSTEM_ICU=OFF in CMake)
         if self.settings.os == 'Windows':
-            self.requires("icu/73.2@qtproject/stable")
+            self.requires("icu/73.2")
             self.requires("libxml2/2.9.10@qtproject/stable")
             self.requires("libxslt/1.1.34@qtproject/stable")
             self.requires("zlib/1.2.11")
