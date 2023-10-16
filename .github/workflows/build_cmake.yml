@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  QT_VERSION: 5.15.1
+  QT_VERSION: 5.15.2
   CCACHE_VERSION: 3.7.7
   CACHE_PARTITION: dev
   HOST_N_CORES: 16
@@ -43,7 +43,7 @@ jobs:
         #    build_type: Release,
         #  }
         - {
-            name: "Windows MSVC Conan Release", artifact: "Windows-MSVC",
+            name: "Windows MSVC Vcpkg Release", artifact: "Windows-MSVC",
             os: windows-latest,
             build_type: Release,
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
@@ -67,7 +67,7 @@ jobs:
         # FIXME: hardcode! Cannot use .travis-sparse-checkout yet
         echo "/*" >> .git/info/sparse-checkout
         echo "!LayoutTests" >> .git/info/sparse-checkout
-        git -c protocol.version=2 fetch --no-tags --prune --progress --depth=10 origin +${GITHUB_SHA}:refs/remotes/origin/${BRANCH}
+        git -c protocol.version=2 fetch --no-tags --prune --progress --depth=1 origin +${GITHUB_SHA}:refs/remotes/origin/${BRANCH}
         git checkout --progress --force -B $BRANCH refs/remotes/origin/$BRANCH
 
     # For Conan
@@ -75,7 +75,14 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-      if: runner.os == 'Windows'  || runner.os == 'macOS'
+      if: runner.os == 'macOS'
+
+    - name: Vcpkg Setup
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        .\vcpkg\bootstrap-vcpkg.bat
 
     - name: Download Qt Windows
       id: qt_win
@@ -133,10 +140,17 @@ jobs:
           ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
 
     - name: Install dependencies (Conan)
-      if: runner.os == 'Windows' || runner.os == 'macOS'
+      if: runner.os == 'macOS'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         pip3 install conan==1.60.1
+
+    - name: Install dependencies (Vcpkg)
+      if: runner.os == 'Windows'
+      shell: powershell
+      # see https://github.com/WebKitForWindows/WebKitRequirements
+      run: |
+        .\vcpkg\vcpkg install icu zlib brotli libressl nghttp2 nghttp3 ngtcp2 c-ares curl[http3,ipv6] libxml2[xslt] libxslt lcms highway libpng libjpeg-turbo libwebp libjxl sqlite3 woff2 freetype harfbuzz pixman cairo --triplet=x64-windows
 
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
@@ -160,14 +174,9 @@ jobs:
         echo "cmake_args='-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_PCH=OFF'" >> $GITHUB_ENV
 
     - name: Configure (Linux)
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' || runner.os == 'Windows'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: cmake $cmake_args -H. -Bbuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
-
-    - name: Configure (MSVC)
-      if: runner.os == 'Windows' && matrix.config.environment_script != ''
-      shell: cmd
-      run: py Tools\qt\build-qtwebkit-conan.py --configure --cmakeargs="%cmake_args%" --qt="${{ steps.qt_win.outputs.qt_dir }}" || exit /b 1
 
     - name: Configure (macOS/Conan)
       if: runner.os == 'macOS'
@@ -197,14 +206,9 @@ jobs:
         ccache -z
 
     - name: Build (Linux)
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' || runner.os == 'Windows'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: ninja -C build -j $HOST_N_CORES -v
-
-    - name: Build (MSVC/Conan)
-      if: runner.os == 'Windows' && matrix.config.environment_script != ''
-      shell: cmd
-      run: py Tools\qt\build-qtwebkit-conan.py --build --install --ninjaargs="-j %HOST_N_CORES% -v" || exit /b 1
 
     - name: Build (macOS/Conan)
       if: runner.os == 'macOS'
