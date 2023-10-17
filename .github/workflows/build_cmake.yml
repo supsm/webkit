@@ -150,7 +150,7 @@ jobs:
       shell: powershell
       # see https://github.com/WebKitForWindows/WebKitRequirements
       run: |
-        .\vcpkg\vcpkg install icu zlib brotli libressl nghttp2 nghttp3 ngtcp2 c-ares curl[http3,ipv6] libxml2[xslt] libxslt lcms highway libpng libjpeg-turbo libwebp libjxl sqlite3 woff2 freetype harfbuzz pixman cairo --triplet=x64-windows
+        .\vcpkg\vcpkg install icu zlib brotli libressl nghttp2 nghttp3 ngtcp2 c-ares curl[http3,ipv6] libxml2 libxslt lcms highway libpng libjpeg-turbo libwebp libjxl sqlite3 woff2 freetype harfbuzz pixman cairo --triplet=x64-windows
 
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
@@ -173,7 +173,7 @@ jobs:
         echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> $GITHUB_ENV
         echo "cmake_args='-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_PCH=OFF'" >> $GITHUB_ENV
 
-    - name: Configure (Linux)
+    - name: Configure (CMake)
       if: runner.os == 'Linux' || runner.os == 'Windows'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: cmake $cmake_args -H. -Bbuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
@@ -205,7 +205,7 @@ jobs:
         ccache -p
         ccache -z
 
-    - name: Build (Linux)
+    - name: Build (CMake/Ninja)
       if: runner.os == 'Linux' || runner.os == 'Windows'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: ninja -C build -j $HOST_N_CORES -v
