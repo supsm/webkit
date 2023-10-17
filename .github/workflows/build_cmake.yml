@@ -108,7 +108,7 @@ jobs:
         Tools/qt/license_writer.sh
         QTWINDIR="C:\\Qt\\${QT_VERSION}\\${DIR}"
         echo "::set-output name=qt_dir::${QTWINDIR}"
-        echo "CMAKE_PREFIX_PATH/${QTWINDIR}" >> "$GITHUB_ENV"
+        echo "CMAKE_PREFIX_PATH=${QTWINDIR}" >> "$GITHUB_ENV"
 
     - name: Download Qt Mac
       id: qt_mac
