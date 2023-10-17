@@ -77,6 +77,13 @@ jobs:
         python-version: '3.11'
       if: runner.os == 'macOS'
 
+    - name: MSVC Setup
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+        sdk: 10.0.19041.0
+
     - name: Vcpkg Setup
       if: runner.os == 'Windows'
       shell: powershell
@@ -150,7 +157,7 @@ jobs:
       shell: powershell
       # see https://github.com/WebKitForWindows/WebKitRequirements
       run: |
-        .\vcpkg\vcpkg install icu zlib brotli libressl nghttp2 nghttp3 ngtcp2 c-ares curl[openssl] libxml2 libxslt lcms highway libpng libjpeg-turbo libwebp libjxl sqlite3 woff2 freetype harfbuzz pixman cairo --triplet=x64-windows
+        .\vcpkg\vcpkg install icu zlib brotli libressl nghttp2 nghttp3 ngtcp2 c-ares curl[openssl] libxml2 libxslt lcms highway libpng libjpeg-turbo libwebp libjxl sqlite3 woff2 freetype harfbuzz pixman cairo --triplet=x64-windows-release
 
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
