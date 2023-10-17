@@ -70,12 +70,12 @@ jobs:
         git -c protocol.version=2 fetch --no-tags --prune --progress --depth=1 origin +${GITHUB_SHA}:refs/remotes/origin/${BRANCH}
         git checkout --progress --force -B $BRANCH refs/remotes/origin/$BRANCH
 
-    # For Conan
+    # For Conan / Qt Download
     - name: Python Setup
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-      if: runner.os == 'macOS'
+      if: runner.os == 'macOS' || runner.os == 'Windows'
 
     - name: MSVC Setup
       if: runner.os == 'Windows'
@@ -91,6 +91,7 @@ jobs:
         git clone https://github.com/microsoft/vcpkg
         .\vcpkg\bootstrap-vcpkg.bat
 
+    # could this be vcpkg instead?
     - name: Download Qt Windows
       id: qt_win
       if: runner.os == 'Windows'
@@ -107,6 +108,7 @@ jobs:
         Tools/qt/license_writer.sh
         QTWINDIR="C:\\Qt\\${QT_VERSION}\\${DIR}"
         echo "::set-output name=qt_dir::${QTWINDIR}"
+        echo "CMAKE_PREFIX_PATH/${QTWINDIR}" >> "$GITHUB_ENV"
 
     - name: Download Qt Mac
       id: qt_mac
