@@ -192,7 +192,7 @@ jobs:
       shell: powershell
       run: |
         $Env:VCPKG_TARGET_TRIPLET = "x64-windows-release"
-        cmake $Env:cmake_args.Trim("'") -Bbuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+        cmake $Env:cmake_args.Trim("'") -S. -Bbuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Configure (macOS/Conan)
       if: runner.os == 'macOS'
