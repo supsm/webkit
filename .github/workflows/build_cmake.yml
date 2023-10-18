@@ -191,7 +191,7 @@ jobs:
       if: runner.os == 'Windows'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
-        $Env:VCPKG_TARGET_TRIPLET = "x64-windows-release"
+        export VCPKG_TARGET_TRIPLET="x64-windows-release"
         cmake $cmake_args -S. -Bbuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Configure (macOS/Conan)
